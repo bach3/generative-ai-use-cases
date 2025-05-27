@@ -14,6 +14,7 @@ import {
   UpdateFeedbackRequest,
   ListChatsResponse,
   AdditionalModelRequestFields,
+  Metadata,
 } from 'generative-ai-use-cases';
 import { useEffect, useMemo } from 'react';
 import { v4 as uuid } from 'uuid';
@@ -337,7 +338,8 @@ const useChatState = create<{
     id: string,
     chunk: string,
     trace?: string,
-    model?: Model
+    model?: Model,
+    metadata?: Metadata
   ) => {
     set((state) => {
       const newChats = produce(state.chats, (draft) => {
@@ -352,7 +354,8 @@ const useChatState = create<{
             ''
           ),
           trace: (oldAssistantMessage.trace || '') + (trace || ''),
-          llmType: model?.modelId,
+          llmType: model?.modelId || oldAssistantMessage.llmType,
+          metadata: metadata || oldAssistantMessage.metadata,
         };
         draft[id].messages.push(newAssistantMessage);
       });
@@ -521,6 +524,17 @@ const useChatState = create<{
             addChunkToAssistantMessage(id, '', payload.trace, model);
           }
 
+          // Metadata
+          if (payload.metadata) {
+            addChunkToAssistantMessage(
+              id,
+              '',
+              undefined,
+              model,
+              payload.metadata
+            );
+          }
+
           // SessionId
           if (payload.sessionId) {
             setSessionId(payload.sessionId);
@@ -553,6 +567,7 @@ const useChatState = create<{
             content: postProcessOutput(oldAssistantMessage.content),
             trace: oldAssistantMessage.trace,
             llmType: model?.modelId,
+            metadata: oldAssistantMessage.metadata,
           };
           draft[id].messages.push(newAssistantMessage);
         });

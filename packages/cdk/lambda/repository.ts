@@ -225,6 +225,7 @@ export const batchCreateMessages = async (
         feedback,
         usecase: m.usecase,
         llmType: m.llmType ?? '',
+        metadata: m.metadata,
       };
     }
   );
