@@ -209,15 +209,18 @@ export const listMessages = async (
 
 // Update token usage
 async function updateTokenUsage(message: RecordedMessage): Promise<void> {
-  if (!message.metadata?.usage) return;
-
   const timestamp = message.createdDate.split('#')[0];
   const date = new Date(parseInt(timestamp));
   const dateStr = date.toISOString().slice(0, 10); // YYYY-MM-DD
   const userId = message.userId.replace('user#', '');
   const modelId = message.llmType || 'unknown';
   const usecase = message.usecase || 'unknown';
-  const usage = message.metadata.usage;
+  const usage = message.metadata?.usage || {
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheReadInputTokens: 0,
+    cacheWriteInputTokens: 0,
+  };
 
   try {
     // Define 3 update commands for 3 tables
