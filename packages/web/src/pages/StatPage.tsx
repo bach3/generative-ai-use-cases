@@ -1,11 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format, subDays } from 'date-fns';
 import useStat from '../hooks/useStat';
 import useStatApi from '../hooks/useStatApi';
-import TokensTimeSeriesChart from '../components/charts/TokensTimeSeriesChart';
-import ModelExecutionsChart from '../components/charts/ModelExecutionsChart';
-import UsecaseDistributionChart from '../components/charts/UsecaseDistributionChart';
+
+const TokensTimeSeriesChart = lazy(
+  () => import('../components/charts/TokensTimeSeriesChart')
+);
+
+const ModelExecutionsChart = lazy(
+  () => import('../components/charts/ModelExecutionsChart')
+);
+
+const UsecaseDistributionChart = lazy(
+  () => import('../components/charts/UsecaseDistributionChart')
+);
 
 const StatPage: React.FC = () => {
   const { t } = useTranslation();
@@ -60,15 +69,20 @@ const StatPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <UsecaseDistributionChart
-          data={stats}
-          title={t('stat.usecase_distribution')}
-        />
-        <ModelExecutionsChart data={stats} title={t('stat.model_executions')} />
-        <TokensTimeSeriesChart
-          data={stats}
-          title={t('stat.daily_token_usage')}
-        />
+        <Suspense fallback={<div>{t('common.loading')}</div>}>
+          <UsecaseDistributionChart
+            data={stats}
+            title={t('stat.usecase_distribution')}
+          />
+          <ModelExecutionsChart
+            data={stats}
+            title={t('stat.model_executions')}
+          />
+          <TokensTimeSeriesChart
+            data={stats}
+            title={t('stat.daily_token_usage')}
+          />
+        </Suspense>
       </div>
     </div>
   );
