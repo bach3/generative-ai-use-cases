@@ -77,6 +77,7 @@ const AgentChatPage: React.FC = () => {
     getModelId,
     setModelId,
     loading,
+    writing,
     loadingMessages,
     isEmpty,
     messages,
@@ -84,6 +85,7 @@ const AgentChatPage: React.FC = () => {
     postChat,
     updateSystemContextByModel,
     retryGeneration,
+    forceToStop,
   } = useChat(pathname);
   const { scrollableContainer, setFollowing } = useFollow();
   const { agentNames: availableModels } = MODELS;
@@ -172,6 +174,11 @@ const AgentChatPage: React.FC = () => {
     setSessionId(uuidv4());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clear]);
+
+  const onStop = useCallback(() => {
+    forceToStop();
+    setSessionId(uuidv4());
+  }, [forceToStop, setSessionId]);
 
   const showingMessages = useMemo(() => {
     return messages;
@@ -271,16 +278,21 @@ const AgentChatPage: React.FC = () => {
         <div className="fixed bottom-0 z-0 flex w-full flex-col items-center justify-center lg:pr-64 print:hidden">
           <InputChatContent
             content={content}
-            disabled={loading}
+            disabled={loading && !writing}
             onChangeContent={setContent}
             resetDisabled={false}
             onSend={() => {
-              onSend();
+              if (!loading) {
+                onSend();
+              } else {
+                onStop();
+              }
             }}
             onReset={onReset}
             fileUpload={true}
             fileLimit={fileLimit}
             accept={fileLimit.accept.doc}
+            canStop={writing}
           />
         </div>
       </div>

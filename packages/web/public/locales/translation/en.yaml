@@ -299,6 +299,7 @@ diagram:
 drawer:
   ai_services: AI Services
   builder_mode: Builder Mode
+  done: Done
   generative_ai: Generative AI
   tools: Tools
   use_cases: Use Cases
@@ -727,6 +728,8 @@ setting:
     login_status: Login status
     rag_enabled: RAG (Amazon Kendra) Enabled
     rag_kb_enabled: RAG (Knowledge Base) Enabled
+    show_tools: Show Tools
+    show_use_case_builder: Show Use Case Builder
     stats: Statistics
     typing_animation: Typing Animation
     version: Version

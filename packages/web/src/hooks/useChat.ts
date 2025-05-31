@@ -33,6 +33,7 @@ const useChatState = create<{
       chat?: Chat;
       messages: ShownMessage[];
       stopReason: string;
+      forcedStop: boolean;
     };
   };
   modelIds: {
@@ -41,10 +42,14 @@ const useChatState = create<{
   loading: {
     [id: string]: boolean;
   };
+  writing: {
+    [id: string]: boolean;
+  };
   base64Cache: { [key: string]: string };
   getModelId: (id: string) => string;
   setModelId: (id: string, newModelId: string) => void;
   setLoading: (id: string, newLoading: boolean) => void;
+  setWriting: (id: string, newWriting: boolean) => void;
   init: (id: string) => void;
   clear: (id: string) => void;
   restore: (id: string, messages: RecordedMessage[], chat: Chat) => void;
@@ -102,6 +107,7 @@ const useChatState = create<{
     feedbackData: UpdateFeedbackRequest
   ) => Promise<void>;
   getStopReason: (id: string) => string;
+  setForcedStop: (id: string, flag: boolean) => void;
 }>((set, get) => {
   const {
     createChat,
@@ -138,6 +144,17 @@ const useChatState = create<{
     });
   };
 
+  const setWriting = (id: string, newWriting: boolean) => {
+    set((state) => {
+      return {
+        writing: {
+          ...state.loading,
+          [id]: newWriting,
+        },
+      };
+    });
+  };
+
   const initChat = (id: string, messages: UnrecordedMessage[], chat?: Chat) => {
     set((state) => {
       return {
@@ -146,6 +163,7 @@ const useChatState = create<{
             chat,
             messages,
             stopReason: '',
+            forcedStop: false,
           };
         }),
         base64Cache: {},
@@ -383,6 +401,16 @@ const useChatState = create<{
     return '';
   };
 
+  const setForcedStop = (id: string, flag: boolean) => {
+    set((state) => {
+      return {
+        chats: produce(state.chats, (draft) => {
+          draft[id].forcedStop = flag;
+        }),
+      };
+    });
+  };
+
   const generateMessage = async (
     generationMode: GenerationMode,
     id: string,
@@ -505,6 +533,16 @@ const useChatState = create<{
     let tmpChunk = '';
 
     for await (const chunk of stream) {
+      if (get().chats[id].forcedStop) {
+        updateStopReason(id, 'forcedStop');
+        setForcedStop(id, false);
+        break;
+      }
+
+      if (!get().writing[id]) {
+        setWriting(id, true);
+      }
+
       const chunks = chunk.split('\n');
 
       for (const c of chunks) {
@@ -555,6 +593,8 @@ const useChatState = create<{
     if (tmpChunk.length > 0) {
       addChunkToAssistantMessage(id, tmpChunk, undefined, model);
     }
+
+    setWriting(id, false);
 
     // Postprocessing of messages (example: addition of footnote)
     if (postProcessOutput) {
@@ -614,10 +654,12 @@ const useChatState = create<{
     chats: {},
     modelIds: {},
     loading: {},
+    writing: {},
     base64Cache: {},
     getModelId,
     setModelId,
     setLoading,
+    setWriting,
     init: (id: string) => {
       if (!get().chats[id]) {
         initChatWithSystemContext(id);
@@ -774,6 +816,7 @@ const useChatState = create<{
     },
 
     getStopReason: getStopReason,
+    setForcedStop,
   };
 });
 
@@ -788,9 +831,11 @@ const useChat = (id: string, chatId?: string) => {
   const {
     chats,
     loading,
+    writing,
     getModelId,
     setModelId,
     setLoading,
+    setWriting,
     init,
     clear,
     restore,
@@ -803,6 +848,7 @@ const useChat = (id: string, chatId?: string) => {
     pushMessage,
     popMessage,
     getStopReason,
+    setForcedStop,
   } = useChatState();
   const { data: messagesData, isLoading: isLoadingMessage } =
     useChatApi().listMessages(chatId);
@@ -831,6 +877,7 @@ const useChat = (id: string, chatId?: string) => {
 
   return {
     loading: loading[id] ?? false,
+    writing: writing[id] ?? false,
     getModelId: () => {
       return getModelId(id);
     },
@@ -839,6 +886,9 @@ const useChat = (id: string, chatId?: string) => {
     },
     setLoading: (newLoading: boolean) => {
       setLoading(id, newLoading);
+    },
+    setWriting: (newWriting: boolean) => {
+      setWriting(id, newWriting);
     },
     loadingMessages: isLoadingMessage,
     init: () => {
@@ -966,6 +1016,9 @@ const useChat = (id: string, chatId?: string) => {
     },
     getStopReason: () => {
       return getStopReason(id);
+    },
+    forceToStop: () => {
+      return setForcedStop(id, true);
     },
   };
 };

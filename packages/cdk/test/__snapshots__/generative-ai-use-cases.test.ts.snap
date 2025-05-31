@@ -11385,27 +11385,30 @@ exports[`GenerativeAiUseCases matches the snapshot 5`] = `
           "Statement": [
             {
               "Action": [
-                "s3:GetObject*",
                 "s3:GetBucket*",
+                "s3:GetObject*",
                 "s3:List*",
               ],
               "Effect": "Allow",
               "Resource": [
                 {
-                  "Fn::GetAtt": [
-                    "APIFileBucket8FB29855",
-                    "Arn",
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      {
+                        "Ref": "APIFileBucket8FB29855",
+                      },
+                    ],
                   ],
                 },
                 {
                   "Fn::Join": [
                     "",
                     [
+                      "arn:aws:s3:::",
                       {
-                        "Fn::GetAtt": [
-                          "APIFileBucket8FB29855",
-                          "Arn",
-                        ],
+                        "Ref": "APIFileBucket8FB29855",
                       },
                       "/*",
                     ],
@@ -11680,31 +11683,30 @@ exports[`GenerativeAiUseCases matches the snapshot 5`] = `
           "Statement": [
             {
               "Action": [
-                "s3:DeleteObject*",
-                "s3:PutObject",
-                "s3:PutObjectLegalHold",
-                "s3:PutObjectRetention",
-                "s3:PutObjectTagging",
-                "s3:PutObjectVersionTagging",
                 "s3:Abort*",
+                "s3:DeleteObject*",
+                "s3:PutObject*",
               ],
               "Effect": "Allow",
               "Resource": [
                 {
-                  "Fn::GetAtt": [
-                    "APIFileBucket8FB29855",
-                    "Arn",
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      {
+                        "Ref": "APIFileBucket8FB29855",
+                      },
+                    ],
                   ],
                 },
                 {
                   "Fn::Join": [
                     "",
                     [
+                      "arn:aws:s3:::",
                       {
-                        "Fn::GetAtt": [
-                          "APIFileBucket8FB29855",
-                          "Arn",
-                        ],
+                        "Ref": "APIFileBucket8FB29855",
                       },
                       "/*",
                     ],
@@ -13665,7 +13667,7 @@ exports[`GenerativeAiUseCases matches the snapshot 5`] = `
           "Name": "GenerativeAiUseCasesStackApiSecurityHeadersPolicyFF62FE6B",
           "SecurityHeadersConfig": {
             "ContentSecurityPolicy": {
-              "ContentSecurityPolicy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.amazonaws.com https://*.amazoncognito.com wss://*.amazonaws.com https://raw.githubusercontent.com https://api.github.com; font-src 'self' https://fonts.gstatic.com data:; object-src 'none'; frame-ancestors 'none'; frame-src 'self' https://www.youtube.com/;",
+              "ContentSecurityPolicy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; media-src 'self' https://*.amazonaws.com https://*.s3.*.amazonaws.com; connect-src 'self' https://*.amazonaws.com https://*.amazoncognito.com wss://*.amazonaws.com:* https://raw.githubusercontent.com https://api.github.com; font-src 'self' https://fonts.gstatic.com data:; object-src 'none'; frame-ancestors 'none'; frame-src 'self' https://www.youtube.com/;",
               "Override": true,
             },
             "ContentTypeOptions": {
@@ -16959,31 +16961,30 @@ exports[`GenerativeAiUseCases matches the snapshot 5`] = `
           "Statement": [
             {
               "Action": [
-                "s3:DeleteObject*",
-                "s3:PutObject",
-                "s3:PutObjectLegalHold",
-                "s3:PutObjectRetention",
-                "s3:PutObjectTagging",
-                "s3:PutObjectVersionTagging",
                 "s3:Abort*",
+                "s3:DeleteObject*",
+                "s3:PutObject*",
               ],
               "Effect": "Allow",
               "Resource": [
                 {
-                  "Fn::GetAtt": [
-                    "TranscribeAudioBucket39DFF290",
-                    "Arn",
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      {
+                        "Ref": "TranscribeAudioBucket39DFF290",
+                      },
+                    ],
                   ],
                 },
                 {
                   "Fn::Join": [
                     "",
                     [
+                      "arn:aws:s3:::",
                       {
-                        "Fn::GetAtt": [
-                          "TranscribeAudioBucket39DFF290",
-                          "Arn",
-                        ],
+                        "Ref": "TranscribeAudioBucket39DFF290",
                       },
                       "/*",
                     ],
