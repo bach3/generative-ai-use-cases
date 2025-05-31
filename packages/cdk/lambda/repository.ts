@@ -672,119 +672,71 @@ export const getRecentTokenUsage = async (
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days + 1);
 
-  const stats: TokenUsageStats[] = [];
-  const currentDate = new Date(startDate);
+  const startDateStr = startDate.toISOString().slice(0, 10);
+  const endDateStr = endDate.toISOString().slice(0, 10);
 
-  while (currentDate <= endDate) {
-    const dateStr = currentDate.toISOString().slice(0, 10);
+  try {
+    // Define queries with date range
+    const mainTableQuery = {
+      TableName: TOKEN_USAGE_TABLE_NAME,
+      KeyConditionExpression:
+        '#userId = :userId AND #date BETWEEN :startDate AND :endDate',
+      ExpressionAttributeNames: {
+        '#userId': 'userId',
+        '#date': 'date',
+      },
+      ExpressionAttributeValues: {
+        ':userId': userId,
+        ':startDate': startDateStr,
+        ':endDate': endDateStr,
+      },
+    };
 
-    try {
-      // Define queries
-      const mainTableQuery = {
-        TableName: TOKEN_USAGE_TABLE_NAME,
-        KeyConditionExpression: '#userId = :userId AND #date = :date',
-        ExpressionAttributeNames: {
-          '#userId': 'userId',
-          '#date': 'date',
-        },
-        ExpressionAttributeValues: {
-          ':userId': userId,
-          ':date': dateStr,
-        },
-      };
+    const usecaseQuery = {
+      TableName: TOKEN_USAGE_BY_USECASE_TABLE_NAME,
+      KeyConditionExpression:
+        '#userId = :userId AND #dateUsecase BETWEEN :startDatePrefix AND :endDatePrefix',
+      ExpressionAttributeNames: {
+        '#userId': 'userId',
+        '#dateUsecase': 'dateUsecase',
+      },
+      ExpressionAttributeValues: {
+        ':userId': userId,
+        ':startDatePrefix': `${startDateStr}#`,
+        ':endDatePrefix': `${endDateStr}#\uffff`, // \uffff is the highest Unicode character
+      },
+    };
 
-      const usecaseQuery = {
-        TableName: TOKEN_USAGE_BY_USECASE_TABLE_NAME,
-        KeyConditionExpression:
-          '#userId = :userId AND begins_with(#dateUsecase, :datePrefix)',
-        ExpressionAttributeNames: {
-          '#userId': 'userId',
-          '#dateUsecase': 'dateUsecase',
-        },
-        ExpressionAttributeValues: {
-          ':userId': userId,
-          ':datePrefix': `${dateStr}#`,
-        },
-      };
+    const modelQuery = {
+      TableName: TOKEN_USAGE_BY_MODEL_TABLE_NAME,
+      KeyConditionExpression:
+        '#userId = :userId AND #dateModel BETWEEN :startDatePrefix AND :endDatePrefix',
+      ExpressionAttributeNames: {
+        '#userId': 'userId',
+        '#dateModel': 'dateModel',
+      },
+      ExpressionAttributeValues: {
+        ':userId': userId,
+        ':startDatePrefix': `${startDateStr}#`,
+        ':endDatePrefix': `${endDateStr}#\uffff`, // \uffff is the highest Unicode character
+      },
+    };
 
-      const modelQuery = {
-        TableName: TOKEN_USAGE_BY_MODEL_TABLE_NAME,
-        KeyConditionExpression:
-          '#userId = :userId AND begins_with(#dateModel, :datePrefix)',
-        ExpressionAttributeNames: {
-          '#userId': 'userId',
-          '#dateModel': 'dateModel',
-        },
-        ExpressionAttributeValues: {
-          ':userId': userId,
-          ':datePrefix': `${dateStr}#`,
-        },
-      };
+    // Execute queries in parallel
+    const [mainResults, usecaseResults, modelResults] = await Promise.all([
+      dynamoDbDocument.send(new QueryCommand(mainTableQuery)),
+      dynamoDbDocument.send(new QueryCommand(usecaseQuery)),
+      dynamoDbDocument.send(new QueryCommand(modelQuery)),
+    ]);
 
-      // Execute queries in parallel
-      const [mainResult, usecaseResult, modelResult] = await Promise.all([
-        dynamoDbDocument.send(new QueryCommand(mainTableQuery)),
-        dynamoDbDocument.send(new QueryCommand(usecaseQuery)),
-        dynamoDbDocument.send(new QueryCommand(modelQuery)),
-      ]);
+    // Create a map of dates to store aggregated data
+    const statsMap = new Map<string, TokenUsageStats>();
 
-      // Aggregate data
-      const mainData = mainResult.Items?.[0] || {
-        totalExecutions: 0,
-        totalInputTokens: 0,
-        totalOutputTokens: 0,
-        totalCacheReadInputTokens: 0,
-        totalCacheWriteInputTokens: 0,
-      };
-
-      // Aggregate usecase statistics
-      const usecaseStats: TokenUsageStats['usecaseStats'] = {};
-      usecaseResult.Items?.forEach((item) => {
-        const usecase = item.usecase;
-        usecaseStats[usecase] = {
-          executions: item.executions || 0,
-          inputTokens: item.inputTokens || 0,
-          outputTokens: item.outputTokens || 0,
-          cacheReadInputTokens: item.cacheReadInputTokens || 0,
-          cacheWriteInputTokens: item.cacheWriteInputTokens || 0,
-        };
-      });
-
-      // Aggregate model statistics
-      const modelStats: TokenUsageStats['modelStats'] = {};
-      modelResult.Items?.forEach((item) => {
-        const modelId = item.modelId;
-        modelStats[modelId] = {
-          executions: item.executions || 0,
-          inputTokens: item.inputTokens || 0,
-          outputTokens: item.outputTokens || 0,
-          cacheReadInputTokens: item.cacheReadInputTokens || 0,
-          cacheWriteInputTokens: item.cacheWriteInputTokens || 0,
-        };
-      });
-
-      // Create daily data
-      stats.push({
-        date: dateStr,
-        userId: userId || 'all',
-        totalExecutions: mainData.totalExecutions || 0,
-        totalInputTokens: mainData.totalInputTokens || 0,
-        totalOutputTokens: mainData.totalOutputTokens || 0,
-        totalCacheReadInputTokens: mainData.totalCacheReadInputTokens || 0,
-        totalCacheWriteInputTokens: mainData.totalCacheWriteInputTokens || 0,
-        usecaseStats,
-        modelStats,
-      });
-
-      console.log(`Data for ${dateStr}:`, {
-        mainData,
-        usecaseStats,
-        modelStats,
-      });
-    } catch (error) {
-      console.error(`Error fetching data for date ${dateStr}:`, error);
-      // If an error occurs, add empty data
-      stats.push({
+    // Initialize stats for all dates in the range
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      const dateStr = currentDate.toISOString().slice(0, 10);
+      statsMap.set(dateStr, {
         date: dateStr,
         userId: userId || 'all',
         totalExecutions: 0,
@@ -795,10 +747,57 @@ export const getRecentTokenUsage = async (
         usecaseStats: {},
         modelStats: {},
       });
+      currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
+    // Process main table results
+    mainResults.Items?.forEach((item) => {
+      const stats = statsMap.get(item.date);
+      if (stats) {
+        stats.totalExecutions = item.totalExecutions || 0;
+        stats.totalInputTokens = item.totalInputTokens || 0;
+        stats.totalOutputTokens = item.totalOutputTokens || 0;
+        stats.totalCacheReadInputTokens = item.totalCacheReadInputTokens || 0;
+        stats.totalCacheWriteInputTokens = item.totalCacheWriteInputTokens || 0;
+      }
+    });
 
-  return stats.sort((a, b) => a.date.localeCompare(b.date));
+    // Process usecase results
+    usecaseResults.Items?.forEach((item) => {
+      const [date, usecase] = item.dateUsecase.split('#');
+      const stats = statsMap.get(date);
+      if (stats) {
+        stats.usecaseStats[usecase] = {
+          executions: item.executions || 0,
+          inputTokens: item.inputTokens || 0,
+          outputTokens: item.outputTokens || 0,
+          cacheReadInputTokens: item.cacheReadInputTokens || 0,
+          cacheWriteInputTokens: item.cacheWriteInputTokens || 0,
+        };
+      }
+    });
+
+    // Process model results
+    modelResults.Items?.forEach((item) => {
+      const [date, modelId] = item.dateModel.split('#');
+      const stats = statsMap.get(date);
+      if (stats) {
+        stats.modelStats[modelId] = {
+          executions: item.executions || 0,
+          inputTokens: item.inputTokens || 0,
+          outputTokens: item.outputTokens || 0,
+          cacheReadInputTokens: item.cacheReadInputTokens || 0,
+          cacheWriteInputTokens: item.cacheWriteInputTokens || 0,
+        };
+      }
+    });
+
+    // Convert map to array and sort by date
+    return Array.from(statsMap.values()).sort((a, b) =>
+      a.date.localeCompare(b.date)
+    );
+  } catch (error) {
+    console.error('Error fetching token usage data:', error);
+    throw error;
+  }
 };
