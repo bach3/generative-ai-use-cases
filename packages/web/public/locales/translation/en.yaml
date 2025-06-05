@@ -499,6 +499,9 @@ landing:
 
         Cute, stylish, easy to use, POP culture, friendly, youth-oriented,
         music, photography, trendy smartphone, city background
+    mcp:
+      content: >-
+        Please research about Amazon Bedrock security. Is user input used for model training?
     rag:
       content: Please provide an overview of Amazon Nova Canvas and explain its key features.
     summarize:
@@ -558,6 +561,10 @@ landing:
       description: >-
         Image generation AI can create new images based on text or images. It allows immediate visualization of ideas and can be expected to improve efficiency in design work. In this feature, you can get LLM assistance in creating prompts.
       title: Image Generation
+    mcp_chat:
+      description: >-
+        MCP Chat is a chat function that seamlessly integrates Bedrock's LLM models with external data and external tools through the Model Context Protocol (MCP). You can freely add tools by editing the mcp.json file.
+      title: MCP Chat
     rag_chat:
       description_kb: >-
         RAG (Retrieval Augmented Generation) is a method that combines information retrieval and LLM text generation, enabling effective information access.
@@ -618,6 +625,8 @@ language:
   ko: Korean
   th: Thai
   zh: Chinese
+mcp_chat:
+  title: MCP Chat
 model:
   parameters:
     reasoning: Reasoning

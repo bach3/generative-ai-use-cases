@@ -122,6 +122,16 @@ const useChatState = create<{
   ) => Promise<void>;
   getStopReason: (id: string) => string;
   setForcedStop: (id: string, flag: boolean) => void;
+  createChatIfNotExist: (id: string) => Promise<string>;
+  addChunkToAssistantMessage: (
+    id: string,
+    chunk: string,
+    trace?: string,
+    model?: Model
+  ) => void;
+  addMessageIdsToUnrecordedMessages: (id: string) => ToBeRecordedMessage[];
+  replaceMessages: (id: string, messages: RecordedMessage[]) => void;
+  setPredictedTitle: (id: string) => Promise<void>;
 }>((set, get) => {
   const {
     createChat,
@@ -205,6 +215,10 @@ const useChatState = create<{
   };
 
   const setPredictedTitle = async (id: string) => {
+    const currentTitle = get().chats[id].chat?.title;
+    if (currentTitle && currentTitle.length > 0) return;
+
+    // If the title is an empty string, predict the title and set it
     const modelId = getModelId(id);
     const model = findModelByModelId(modelId)!;
     const prompter = getPrompter(modelId);
@@ -219,10 +233,9 @@ const useChatState = create<{
     setTitle(id, title);
   };
 
-  const createChatIfNotExist = async (
-    id: string,
-    chat?: Chat
-  ): Promise<string> => {
+  const createChatIfNotExist = async (id: string): Promise<string> => {
+    const chat = get().chats[id].chat;
+
     if (chat) {
       return chat.chatId;
     }
@@ -618,14 +631,11 @@ const useChatState = create<{
 
     setLoading(id, false);
 
-    const chatId = await createChatIfNotExist(id, get().chats[id].chat);
+    const chatId = await createChatIfNotExist(id);
 
-    // If the title is an empty string, predict the title and set it
-    if (get().chats[id].chat?.title === '') {
-      setPredictedTitle(id).then(() => {
-        mutateListChat();
-      });
-    }
+    setPredictedTitle(id).then(() => {
+      mutateListChat();
+    });
 
     const toBeRecordedMessages = addMessageIdsToUnrecordedMessages(id);
 
@@ -897,6 +907,11 @@ const useChatState = create<{
 
     getStopReason: getStopReason,
     setForcedStop,
+    createChatIfNotExist,
+    addChunkToAssistantMessage,
+    addMessageIdsToUnrecordedMessages,
+    replaceMessages,
+    setPredictedTitle,
   };
 });
 
@@ -930,6 +945,11 @@ const useChat = (id: string, chatId?: string) => {
     popMessage,
     getStopReason,
     setForcedStop,
+    createChatIfNotExist,
+    addChunkToAssistantMessage,
+    addMessageIdsToUnrecordedMessages,
+    replaceMessages,
+    setPredictedTitle,
   } = useChatState();
   const { data: messagesData, isLoading: isLoadingMessage } =
     useChatApi().listMessages(chatId);
@@ -1133,6 +1153,25 @@ const useChat = (id: string, chatId?: string) => {
     },
     forceToStop: () => {
       return setForcedStop(id, true);
+    },
+    createChatIfNotExist: async () => {
+      return createChatIfNotExist(id);
+    },
+    addChunkToAssistantMessage: (
+      chunk: string,
+      trace?: string,
+      model?: Model
+    ) => {
+      addChunkToAssistantMessage(id, chunk, trace, model);
+    },
+    addMessageIdsToUnrecordedMessages: () => {
+      return addMessageIdsToUnrecordedMessages(id);
+    },
+    replaceMessages: (messages: RecordedMessage[]) => {
+      replaceMessages(id, messages);
+    },
+    setPredictedTitle: async () => {
+      await setPredictedTitle(id);
     },
   };
 };
