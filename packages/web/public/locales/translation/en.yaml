@@ -3,7 +3,7 @@ agent:
   title: Agent Chat
 auth:
   loading: Loading...
-  login: Amazon Midway Login
+  login: Login
   title: Generative AI Use Cases on AWS
 chat:
   advanced_options: Advanced Options

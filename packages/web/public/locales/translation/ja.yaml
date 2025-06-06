@@ -3,7 +3,7 @@ agent:
   title: Agent チャット
 auth:
   loading: 読み込み中...
-  login: Amazon Midway Login
+  login: ログイン
   title: Generative AI Use Cases on AWS
 chat:
   advanced_options: 高度なオプション

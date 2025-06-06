@@ -162,7 +162,6 @@ async def streaming(request: StreamingRequest):
         )
 
         async for event in agent.stream_async(request.userPrompt):
-            print(event)
             if is_message(event):
                 if is_assistant(event):
                     text = extract_text(event)
