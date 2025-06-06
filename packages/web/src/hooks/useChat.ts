@@ -378,6 +378,10 @@ const useChatState = create<{
     });
   };
 
+  const isExactlyCodeBlock = (text: string): boolean => {
+    return /^```\s*(\w*)\s*\n([\s\S]*?)\n```\s*$/.test(text);
+  };
+
   const addChunkToAssistantMessage = (
     id: string,
     chunk: string,
@@ -386,8 +390,15 @@ const useChatState = create<{
   ) => {
     set((state) => {
       const newChats = produce(state.chats, (draft) => {
+        let traceInlineMessage: string | undefined = undefined;
+
+        // If the received trace is a code block, do not display it as an inline message
+        if (trace && !isExactlyCodeBlock(trace.trim())) {
+          traceInlineMessage = trace.trim();
+        }
+
         const oldAssistantMessage = draft[id].messages.pop()!;
-        const newAssistantMessage: UnrecordedMessage = {
+        const newAssistantMessage: ShownMessage = {
           ...oldAssistantMessage,
           role: 'assistant',
           // When a new model is added, the default prompter is Claude's, so the output may be enclosed in <output></output>
@@ -397,6 +408,8 @@ const useChatState = create<{
             ''
           ),
           trace: (oldAssistantMessage.trace || '') + (trace || ''),
+          traceInlineMessage:
+            traceInlineMessage ?? oldAssistantMessage.traceInlineMessage,
           llmType: model?.modelId,
         };
         draft[id].messages.push(newAssistantMessage);

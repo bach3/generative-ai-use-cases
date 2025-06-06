@@ -3,7 +3,7 @@ agent:
   title: Agent チャット
 auth:
   loading: 読み込み中...
-  login: ログイン
+  login: Amazon Midway Login
   title: Generative AI Use Cases on AWS
 chat:
   advanced_options: 高度なオプション
@@ -406,6 +406,10 @@ generateText:
   source_info: 文章の元になる情報
   title: 文章生成
 landing:
+  alert:
+    description: >-
+      こちらは SA が内部デモのために利用する環境です。カスタマーにデモをする場合は、原則自分の AWS アカウントにデプロイしたものを利用してください。カスタマーのデータの入力や業務利用をしてはいけません。
+    title: GenU デモ環境について
   demo:
     agent:
       content: ダミーデータで散布図を描いてください。
@@ -544,6 +548,7 @@ language:
   th: タイ語
   zh: 中国語
 mcp_chat:
+  loading_message: MCP サーバーと接続しています。時間がかかる場合があります。そのまま待機してください...
   title: MCP チャット
 model:
   parameters:

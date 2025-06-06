@@ -13,6 +13,12 @@ from typing import List
 UV_ENV = {
     'UV_NO_CACHE': '1',
     'UV_TOOL_DIR': '/tmp/tool',
+    'HOME': '/tmp',
+    'TMPDIR': '/tmp',
+    'npm_config_cache': '/tmp/.npm',
+    'XDG_CONFIG_HOME': '/tmp/.config',
+    'XDG_CACHE_HOME': '/tmp/.cache',
+    'XDG_DATA_HOME': '/tmp/.local/share',
 }
 
 def stream_chunk(text, trace):
@@ -163,15 +169,16 @@ async def streaming(request: StreamingRequest):
                     tool_use = extract_tool_use(event)
 
                     if text is not None and tool_use is not None:
-                        yield stream_chunk('', f'{text}\n```\n{tool_use["name"]}: {tool_use["input"]}\n```\n')
+                        yield stream_chunk('', f'{text}\n')
+                        yield stream_chunk('', f'```\n{tool_use["name"]}: {tool_use["input"]}\n```\n')
                     elif text is not None:
                         yield stream_chunk(text, None)
                     else:
                         yield stream_chunk('', f'```\n{tool_use["name"]}: {tool_use["input"]}\n```\n')
                 else:
                     tool_result = extract_tool_result(event)
-                    if len(tool_result) > 100:
-                        tool_result = tool_result[:100] + '...'
+                    if len(tool_result) > 200:
+                        tool_result = tool_result[:200] + '...'
                     yield stream_chunk('', f'```\n{tool_result}\n```\n')
 
     return StreamingResponse(
