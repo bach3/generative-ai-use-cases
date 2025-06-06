@@ -43,8 +43,11 @@ const UsecaseDistributionChart: React.FC<ChartProps> = ({
         date: format(new Date(stat.date), 'MM/dd'),
       };
 
-      Object.entries(stat.usecaseStats).forEach(([usecase, stats]) => {
-        dailyStats[usecase] = stats.executions;
+      Object.entries(stat.executions || {}).forEach(([key, value]) => {
+        if (key.startsWith('usecase#')) {
+          const usecase = key.replace('usecase#', '');
+          dailyStats[usecase] = value;
+        }
       });
 
       return dailyStats;
@@ -52,7 +55,13 @@ const UsecaseDistributionChart: React.FC<ChartProps> = ({
 
     // Get all usecases that appeared during the entire period
     const allUsecases = Array.from(
-      new Set(data.flatMap((stat) => Object.keys(stat.usecaseStats)))
+      new Set(
+        data.flatMap((stat) =>
+          Object.keys(stat.executions || {})
+            .filter((key) => key.startsWith('usecase#'))
+            .map((key) => key.replace('usecase#', ''))
+        )
+      )
     ).sort();
 
     // Initialize execution count for usecases that do not exist

@@ -43,11 +43,14 @@ const ModelExecutionsChart: React.FC<ChartProps> = ({
     return data.map((stat) => {
       const baseData: ModelExecutionData = {
         date: format(new Date(stat.date), 'MM/dd'),
-        total: stat.totalExecutions,
+        total: stat.executions?.overall || 0,
       };
       // Add execution counts for each model
-      Object.entries(stat.modelStats).forEach(([modelId, modelData]) => {
-        baseData[modelId] = modelData.executions;
+      Object.entries(stat.executions || {}).forEach(([key, value]) => {
+        if (key.startsWith('model#')) {
+          const modelId = key.replace('model#', '');
+          baseData[modelId] = value;
+        }
       });
       return baseData;
     });
@@ -56,7 +59,12 @@ const ModelExecutionsChart: React.FC<ChartProps> = ({
   const modelIds = useMemo(() => {
     const ids = new Set<string>();
     data.forEach((stat) => {
-      Object.keys(stat.modelStats).forEach((modelId) => ids.add(modelId));
+      Object.keys(stat.executions || {}).forEach((key) => {
+        if (key.startsWith('model#')) {
+          const modelId = key.replace('model#', '');
+          ids.add(modelId);
+        }
+      });
     });
     return Array.from(ids);
   }, [data]);

@@ -1,48 +1,31 @@
 export interface TokenUsageStats {
   date: string;
   userId: string;
-  // 基本的な集計データ
-  totalExecutions: number;
-  totalInputTokens: number;
-  totalOutputTokens: number;
-  totalCacheReadInputTokens: number;
-  totalCacheWriteInputTokens: number;
-
-  // ユースケースごとの集計
-  usecaseStats: {
-    [usecase: string]: {
-      executions: number;
-      inputTokens: number;
-      outputTokens: number;
-      cacheReadInputTokens: number;
-      cacheWriteInputTokens: number;
-    };
+  // Execution count statistics
+  executions: {
+    overall: number;
+    [key: string]: number; // model#{modelId} or usecase#{usecase}
   };
-
-  // モデルごとの集計
-  modelStats: {
-    [modelId: string]: {
-      executions: number;
-      inputTokens: number;
-      outputTokens: number;
-      cacheReadInputTokens: number;
-      cacheWriteInputTokens: number;
-    };
+  // Input token statistics
+  inputTokens: {
+    overall: number;
+    [key: string]: number;
   };
-}
-
-export interface TokenUsageFilter {
-  yearMonth?: string;
-  userId?: string;
-  modelId?: string;
-  usecase?: string;
-  startDate?: string;
-  endDate?: string;
-}
-
-export interface TokenUsageAggregation extends TokenUsageStats {
-  id: string; // 'tokenUsage#YYYY-MM' or 'tokenUsageHourly#YYYY-MM-DD-HH'
-  createdDate: string; // ISO date string with granularity
+  // Output token statistics
+  outputTokens: {
+    overall: number;
+    [key: string]: number;
+  };
+  // Cache read input token statistics
+  cacheReadInputTokens: {
+    overall: number;
+    [key: string]: number;
+  };
+  // Cache write input token statistics
+  cacheWriteInputTokens: {
+    overall: number;
+    [key: string]: number;
+  };
 }
 
 export interface GetTokenUsageEvent {

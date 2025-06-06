@@ -49,13 +49,11 @@ export interface BackendApiProps {
   readonly idPool: IdentityPool;
   readonly userPoolClient: UserPoolClient;
   readonly table: Table;
+  readonly statsTable: Table;
   readonly knowledgeBaseId?: string;
   readonly agents?: Agent[];
   readonly guardrailIdentify?: string;
   readonly guardrailVersion?: string;
-  readonly tokenUsageTable: Table;
-  readonly tokenUsageByUsecaseTable: Table;
-  readonly tokenUsageByModelTable: Table;
 }
 
 export class Api extends Construct {
@@ -89,9 +87,6 @@ export class Api extends Construct {
       knowledgeBaseId,
       queryDecompositionEnabled,
       rerankingModelId,
-      tokenUsageTable,
-      tokenUsageByUsecaseTable,
-      tokenUsageByModelTable,
     } = props;
     const agents: Agent[] = [...(props.agents ?? []), ...props.customAgents];
 
@@ -537,16 +532,12 @@ export class Api extends Construct {
       timeout: Duration.minutes(15),
       environment: {
         TABLE_NAME: table.tableName,
+        STATS_TABLE_NAME: props.statsTable.tableName,
         BUCKET_NAME: fileBucket.bucketName,
-        TOKEN_USAGE_TABLE_NAME: tokenUsageTable.tableName,
-        TOKEN_USAGE_BY_USECASE_TABLE_NAME: tokenUsageByUsecaseTable.tableName,
-        TOKEN_USAGE_BY_MODEL_TABLE_NAME: tokenUsageByModelTable.tableName,
       },
     });
     table.grantReadWriteData(createMessagesFunction);
-    tokenUsageTable.grantWriteData(createMessagesFunction);
-    tokenUsageByUsecaseTable.grantWriteData(createMessagesFunction);
-    tokenUsageByModelTable.grantWriteData(createMessagesFunction);
+    props.statsTable.grantReadWriteData(createMessagesFunction);
 
     const updateChatTitleFunction = new NodejsFunction(
       this,
@@ -720,14 +711,11 @@ export class Api extends Construct {
       entry: './lambda/getTokenUsage.ts',
       environment: {
         TABLE_NAME: table.tableName,
-        TOKEN_USAGE_TABLE_NAME: tokenUsageTable.tableName,
-        TOKEN_USAGE_BY_USECASE_TABLE_NAME: tokenUsageByUsecaseTable.tableName,
-        TOKEN_USAGE_BY_MODEL_TABLE_NAME: tokenUsageByModelTable.tableName,
+        STATS_TABLE_NAME: props.statsTable.tableName,
       },
     });
-    tokenUsageTable.grantReadData(getTokenUsageFunction);
-    tokenUsageByUsecaseTable.grantReadData(getTokenUsageFunction);
-    tokenUsageByModelTable.grantReadData(getTokenUsageFunction);
+    table.grantReadData(getTokenUsageFunction);
+    props.statsTable.grantReadData(getTokenUsageFunction);
 
     // API Gateway
     const authorizer = new CognitoUserPoolsAuthorizer(this, 'Authorizer', {

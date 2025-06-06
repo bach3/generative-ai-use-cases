@@ -27,10 +27,10 @@ const TokensTimeSeriesChart: React.FC<ChartProps> = ({
     return data.map((stat) => {
       return {
         date: format(new Date(stat.date), 'MM/dd'),
-        inputTokens: stat.totalInputTokens,
-        outputTokens: stat.totalOutputTokens,
-        cacheReadTokens: stat.totalCacheReadInputTokens,
-        cacheWriteTokens: stat.totalCacheWriteInputTokens,
+        inputTokens: stat.inputTokens?.overall || 0,
+        outputTokens: stat.outputTokens?.overall || 0,
+        cacheReadTokens: stat.cacheReadInputTokens?.overall || 0,
+        cacheWriteTokens: stat.cacheWriteInputTokens?.overall || 0,
       };
     });
   }, [data]);

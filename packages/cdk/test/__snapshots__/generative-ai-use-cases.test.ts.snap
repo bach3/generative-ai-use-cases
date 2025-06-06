@@ -9910,17 +9910,11 @@ exports[`GenerativeAiUseCases matches the snapshot 5`] = `
             "BUCKET_NAME": {
               "Ref": "APIFileBucket8FB29855",
             },
+            "STATS_TABLE_NAME": {
+              "Ref": "DatabaseStatsTable9C709761",
+            },
             "TABLE_NAME": {
               "Ref": "DatabaseTableF104A135",
-            },
-            "TOKEN_USAGE_BY_MODEL_TABLE_NAME": {
-              "Ref": "DatabaseTokenUsageByModelTable43848310",
-            },
-            "TOKEN_USAGE_BY_USECASE_TABLE_NAME": {
-              "Ref": "DatabaseTokenUsageByUsecaseTable53C3DD8F",
-            },
-            "TOKEN_USAGE_TABLE_NAME": {
-              "Ref": "DatabaseTokenUsageTable63031EAB",
             },
           },
         },
@@ -10016,6 +10010,13 @@ exports[`GenerativeAiUseCases matches the snapshot 5`] = `
             },
             {
               "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
                 "dynamodb:BatchWriteItem",
                 "dynamodb:PutItem",
                 "dynamodb:UpdateItem",
@@ -10026,49 +10027,7 @@ exports[`GenerativeAiUseCases matches the snapshot 5`] = `
               "Resource": [
                 {
                   "Fn::GetAtt": [
-                    "DatabaseTokenUsageTable63031EAB",
-                    "Arn",
-                  ],
-                },
-                {
-                  "Ref": "AWS::NoValue",
-                },
-              ],
-            },
-            {
-              "Action": [
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable",
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DatabaseTokenUsageByUsecaseTable53C3DD8F",
-                    "Arn",
-                  ],
-                },
-                {
-                  "Ref": "AWS::NoValue",
-                },
-              ],
-            },
-            {
-              "Action": [
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable",
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DatabaseTokenUsageByModelTable43848310",
+                    "DatabaseStatsTable9C709761",
                     "Arn",
                   ],
                 },
@@ -11981,17 +11940,11 @@ exports[`GenerativeAiUseCases matches the snapshot 5`] = `
         },
         "Environment": {
           "Variables": {
+            "STATS_TABLE_NAME": {
+              "Ref": "DatabaseStatsTable9C709761",
+            },
             "TABLE_NAME": {
               "Ref": "DatabaseTableF104A135",
-            },
-            "TOKEN_USAGE_BY_MODEL_TABLE_NAME": {
-              "Ref": "DatabaseTokenUsageByModelTable43848310",
-            },
-            "TOKEN_USAGE_BY_USECASE_TABLE_NAME": {
-              "Ref": "DatabaseTokenUsageByUsecaseTable53C3DD8F",
-            },
-            "TOKEN_USAGE_TABLE_NAME": {
-              "Ref": "DatabaseTokenUsageTable63031EAB",
             },
           },
         },
@@ -12060,12 +12013,23 @@ exports[`GenerativeAiUseCases matches the snapshot 5`] = `
               "Resource": [
                 {
                   "Fn::GetAtt": [
-                    "DatabaseTokenUsageTable63031EAB",
+                    "DatabaseTableF104A135",
                     "Arn",
                   ],
                 },
                 {
-                  "Ref": "AWS::NoValue",
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DatabaseTableF104A135",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
                 },
               ],
             },
@@ -12084,31 +12048,7 @@ exports[`GenerativeAiUseCases matches the snapshot 5`] = `
               "Resource": [
                 {
                   "Fn::GetAtt": [
-                    "DatabaseTokenUsageByUsecaseTable53C3DD8F",
-                    "Arn",
-                  ],
-                },
-                {
-                  "Ref": "AWS::NoValue",
-                },
-              ],
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:GetRecords",
-                "dynamodb:GetShardIterator",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:DescribeTable",
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DatabaseTokenUsageByModelTable43848310",
+                    "DatabaseStatsTable9C709761",
                     "Arn",
                   ],
                 },
@@ -15731,6 +15671,34 @@ exports[`GenerativeAiUseCases matches the snapshot 5`] = `
       "Type": "AWS::IAM::Role",
       "UpdateReplacePolicy": "Delete",
     },
+    "DatabaseStatsTable9C709761": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "id",
+            "AttributeType": "S",
+          },
+          {
+            "AttributeName": "userId",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH",
+          },
+          {
+            "AttributeName": "userId",
+            "KeyType": "RANGE",
+          },
+        ],
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Delete",
+    },
     "DatabaseTableF104A135": {
       "DeletionPolicy": "Delete",
       "Properties": {
@@ -15770,90 +15738,6 @@ exports[`GenerativeAiUseCases matches the snapshot 5`] = `
           },
           {
             "AttributeName": "createdDate",
-            "KeyType": "RANGE",
-          },
-        ],
-      },
-      "Type": "AWS::DynamoDB::Table",
-      "UpdateReplacePolicy": "Delete",
-    },
-    "DatabaseTokenUsageByModelTable43848310": {
-      "DeletionPolicy": "Delete",
-      "Properties": {
-        "AttributeDefinitions": [
-          {
-            "AttributeName": "userId",
-            "AttributeType": "S",
-          },
-          {
-            "AttributeName": "dateModel",
-            "AttributeType": "S",
-          },
-        ],
-        "BillingMode": "PAY_PER_REQUEST",
-        "KeySchema": [
-          {
-            "AttributeName": "userId",
-            "KeyType": "HASH",
-          },
-          {
-            "AttributeName": "dateModel",
-            "KeyType": "RANGE",
-          },
-        ],
-      },
-      "Type": "AWS::DynamoDB::Table",
-      "UpdateReplacePolicy": "Delete",
-    },
-    "DatabaseTokenUsageByUsecaseTable53C3DD8F": {
-      "DeletionPolicy": "Delete",
-      "Properties": {
-        "AttributeDefinitions": [
-          {
-            "AttributeName": "userId",
-            "AttributeType": "S",
-          },
-          {
-            "AttributeName": "dateUsecase",
-            "AttributeType": "S",
-          },
-        ],
-        "BillingMode": "PAY_PER_REQUEST",
-        "KeySchema": [
-          {
-            "AttributeName": "userId",
-            "KeyType": "HASH",
-          },
-          {
-            "AttributeName": "dateUsecase",
-            "KeyType": "RANGE",
-          },
-        ],
-      },
-      "Type": "AWS::DynamoDB::Table",
-      "UpdateReplacePolicy": "Delete",
-    },
-    "DatabaseTokenUsageTable63031EAB": {
-      "DeletionPolicy": "Delete",
-      "Properties": {
-        "AttributeDefinitions": [
-          {
-            "AttributeName": "userId",
-            "AttributeType": "S",
-          },
-          {
-            "AttributeName": "date",
-            "AttributeType": "S",
-          },
-        ],
-        "BillingMode": "PAY_PER_REQUEST",
-        "KeySchema": [
-          {
-            "AttributeName": "userId",
-            "KeyType": "HASH",
-          },
-          {
-            "AttributeName": "date",
             "KeyType": "RANGE",
           },
         ],
