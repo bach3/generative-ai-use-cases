@@ -6,7 +6,7 @@ import { Sha256 } from '@aws-crypto/sha256-js';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
 import { CognitoIdentityClient } from '@aws-sdk/client-cognito-identity';
-import { StreamingChunk, McpRequest } from 'generative-ai-use-cases';
+import { StreamingChunk, McpRequest, Model } from 'generative-ai-use-cases';
 
 const MCP_ENDPOINT = import.meta.env.VITE_APP_MCP_ENDPOINT;
 
@@ -24,9 +24,13 @@ const useMcpApi = (id: string) => {
 
   const { createMessages } = useChatApi();
 
-  const processChunk = (chunk: string) => {
+  const processChunk = (chunk: string, model: Model) => {
     const streamingChunk: StreamingChunk = JSON.parse(chunk);
-    addChunkToAssistantMessage(streamingChunk.text, streamingChunk.trace);
+    addChunkToAssistantMessage(
+      streamingChunk.text,
+      streamingChunk.trace,
+      model
+    );
   };
 
   const postMessage = async (req: McpRequest) => {
@@ -106,12 +110,12 @@ const useMcpApi = (id: string) => {
 
         for (const line of lines) {
           if (line.trim()) {
-            processChunk(line);
+            processChunk(line, req.model);
           }
         }
 
         if (done && buffer) {
-          processChunk(buffer);
+          processChunk(buffer, req.model);
         }
 
         if (done) {

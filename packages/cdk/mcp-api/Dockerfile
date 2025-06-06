@@ -9,8 +9,7 @@ ENV UV_NO_MANAGED_PYTHON=1
 ENV UV_PYTHON=/usr/local/bin/python
 ENV UV_INSTALL_DIR=/usr/local/bin
 
-# Graphviz: https://awslabs.github.io/mcp/servers/aws-diagram-mcp-server/
-RUN apt-get update -y && apt-get install curl graphviz -y
+RUN apt-get update -y && apt-get install curl -y
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 COPY pyproject.toml .python-version uv.lock .
